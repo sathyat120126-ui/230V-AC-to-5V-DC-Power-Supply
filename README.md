@@ -79,9 +79,7 @@ The simulation analyzes:
 ## 📁 Project Files
 
 * `Documentation/` – Detailed project report
-* `Circuit/` – Circuit diagram
-* `Simulation/` – Simulation waveform
-* `Results/` – Simulation observations and calculations
+  
 
 ## 🛡️ Safety
 
