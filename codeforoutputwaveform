@@ -1,0 +1,98 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Power supply parameters
+f = 50
+V_rms = 230
+V_secondary_rms = 9
+V_peak = V_secondary_rms * np.sqrt(2)
+
+C = 1000e-6
+R_load = 50
+diode_drop = 0.7
+
+# Time
+t = np.linspace(0, 0.2, 10000)
+dt = t[1] - t[0]
+
+# 1. Transformer secondary voltage
+V_secondary = V_peak * np.sin(2 * np.pi * f * t)
+
+# 2. Bridge rectifier
+V_rectified = np.maximum(
+    np.abs(V_secondary) - 2 * diode_drop, 0
+)
+
+# 3. Capacitor filter
+V_capacitor = np.zeros(len(t))
+
+for i in range(1, len(t)):
+    discharge = V_capacitor[i-1] * np.exp(
+        -dt / (R_load * C)
+    )
+
+    V_capacitor[i] = max(
+        discharge,
+        V_rectified[i]
+    )
+
+# 4. LM7805 regulator
+V_output = np.minimum(
+    np.maximum(V_capacitor - 2, 0),
+    5
+)
+
+# Results
+steady = t > 0.14
+
+print("\n===== POWER SUPPLY SIMULATION =====")
+print(f"Transformer secondary RMS : {V_secondary_rms:.2f} V")
+print(f"Secondary peak voltage    : {V_peak:.2f} V")
+print(f"Bridge peak voltage       : {np.max(V_rectified):.2f} V")
+print(f"Filtered DC voltage       : {np.mean(V_capacitor[steady]):.2f} V")
+print(f"Regulated output voltage  : {np.mean(V_output[steady]):.2f} V")
+print(f"Load resistance           : {R_load} ohm")
+print(f"Load current              : {5/R_load:.3f} A")
+
+# Plot
+plt.figure(figsize=(10, 6))
+
+plt.plot(
+    t * 1000,
+    V_secondary,
+    label="Transformer Secondary AC"
+)
+
+plt.plot(
+    t * 1000,
+    V_rectified,
+    label="Bridge Rectifier Output"
+)
+
+plt.plot(
+    t * 1000,
+    V_capacitor,
+    label="Filtered DC"
+)
+
+plt.plot(
+    t * 1000,
+    V_output,
+    label="LM7805 Output"
+)
+
+plt.xlabel("Time (ms)")
+plt.ylabel("Voltage (V)")
+plt.title("230V AC to 5V DC Power Supply Simulation")
+
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+
+plt.savefig(
+    "power_supply_simulation.png",
+    dpi=300
+)
+
+plt.show()
